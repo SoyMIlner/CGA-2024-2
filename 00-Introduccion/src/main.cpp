@@ -1,3 +1,5 @@
+//Flores Pérez Milner Ushuaía - 316137645 - Computación Gráfica Avanzada
+
 #define _USE_MATH_DEFINES
 #include <cmath>
 //glew include
@@ -63,6 +65,7 @@ Model modelEclipseChasis;
 Model modelEclipseRearWheels;
 Model modelEclipseFrontalWheels;
 Model modelHeliChasis;
+Model modelHeliRear;
 Model modelHeliHeli;
 Model modelLambo;
 Model modelLamboLeftDor;
@@ -142,6 +145,9 @@ float rotHelHelY = 0.0;
 // Var animate lambo dor
 int stateDoor = 0;
 float dorRotCount = 0.0;
+
+float avance = 0.1f;
+float giroEclipse = 0.5f;
 
 double deltaTime;
 double currTime, lastTime;
@@ -233,6 +239,7 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 
 	esfera1.init();
 	esfera1.setShader(&shaderMulLighting);
+	esfera1.setPosition(glm::vec3(0.0f, 2.0f, 0.0f));
 
 	modelRock.loadModel("../models/rock/rock.obj");
 	modelRock.setShader(&shaderMulLighting);
@@ -252,6 +259,8 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	modelHeliChasis.setShader(&shaderMulLighting);
 	modelHeliHeli.loadModel("../models/Helicopter/Mi_24_heli.obj");
 	modelHeliHeli.setShader(&shaderMulLighting);
+	modelHeliRear.loadModel("../models/Helicopter/Mi_24_heli_rear.obj");
+	modelHeliRear.setShader(&shaderMulLighting);
 	// Lamborginhi
 	modelLambo.loadModel("../models/Lamborginhi_Aventador_OBJ/Lamborghini_Aventador_chasis.obj");
 	modelLambo.setShader(&shaderMulLighting);
@@ -484,6 +493,7 @@ void destroy() {
 	modelEclipseRearWheels.destroy();
 	modelHeliChasis.destroy();
 	modelHeliHeli.destroy();
+	modelHeliRear.destroy();
 	modelLambo.destroy();
 	modelLamboFrontLeftWheel.destroy();
 	modelLamboFrontRightWheel.destroy();
@@ -907,6 +917,12 @@ void applicationLoop() {
 		modelMatrixHeliHeli = glm::translate(modelMatrixHeliHeli, glm::vec3(0.0, 0.0, 0.249548));
 		modelHeliHeli.render(modelMatrixHeliHeli);
 
+		glm::mat4 modelMatrixHeliRear = glm::mat4(modelMatrixHeliChasis);
+		modelMatrixHeliRear = glm::translate(modelMatrixHeliRear, glm::vec3(0, 2.10266, -5.63722));
+		modelMatrixHeliRear = glm::rotate(modelMatrixHeliRear, rotHelHelY, glm::vec3(1, 0, 0));
+		modelMatrixHeliRear = glm::translate(modelMatrixHeliRear, glm::vec3(0, -2.10266, 5.63722));
+		modelHeliRear.render(modelMatrixHeliRear);
+
 		// Lambo car
 		glDisable(GL_CULL_FACE);
 		glm::mat4 modelMatrixLamboChasis = glm::mat4(modelMatrixLambo);
@@ -914,9 +930,9 @@ void applicationLoop() {
 		modelLambo.render(modelMatrixLamboChasis);
 		glActiveTexture(GL_TEXTURE0);
 		glm::mat4 modelMatrixLamboLeftDor = glm::mat4(modelMatrixLamboChasis);
-		modelMatrixLamboLeftDor = glm::translate(modelMatrixLamboLeftDor, glm::vec3(1.08676, 0.707316, 0.982601));
+		modelMatrixLamboLeftDor = glm::translate(modelMatrixLamboLeftDor, glm::vec3(1.087, 0.9795, 0.7083));
 		modelMatrixLamboLeftDor = glm::rotate(modelMatrixLamboLeftDor, glm::radians(dorRotCount), glm::vec3(1.0, 0, 0));
-		modelMatrixLamboLeftDor = glm::translate(modelMatrixLamboLeftDor, glm::vec3(-1.08676, -0.707316, -0.982601));
+		modelMatrixLamboLeftDor = glm::translate(modelMatrixLamboLeftDor, glm::vec3(-1.087, -0.9795, -0.7083));
 		modelLamboLeftDor.render(modelMatrixLamboLeftDor);
 		modelLamboRightDor.render(modelMatrixLamboChasis);
 		modelLamboFrontLeftWheel.render(modelMatrixLamboChasis);
@@ -992,6 +1008,76 @@ void applicationLoop() {
 		skyboxSphere.render();
 		glCullFace(oldCullFaceMode);
 		glDepthFunc(oldDepthFuncMode);
+
+		/*+++++++++++++++++++++++++++Máquinas de estado++++++++++++++++++++++++++++++*/
+		switch (state)
+		{
+		case 0:
+			if(numberAdvance == 0){
+				maxAdvance = 65.0;
+			}
+			if(numberAdvance == 1){
+				maxAdvance = 49.0;
+			}
+			if(numberAdvance == 2){
+				maxAdvance = 44.5;
+			}
+			if(numberAdvance == 3){
+				maxAdvance = 49.0;
+			}
+			if(numberAdvance == 4){
+				maxAdvance = 44.5;
+			}
+			state =1;
+			break;
+		case 1:
+			modelMatrixEclipse = glm::translate(modelMatrixEclipse, glm::vec3(0.0f, 0.0f, avance));
+			advanceCount += avance;
+			rotWheelsX += 0.05;
+			rotWheelsY -= 0.02;
+			if (rotWheelsY < 0.0)
+				rotWheelsY = 0.0;
+			if(advanceCount > maxAdvance){
+				advanceCount = 0;
+				numberAdvance++;
+				state = 2;
+			}
+			break;
+		case 2:
+			modelMatrixEclipse = glm::translate(modelMatrixEclipse, glm::vec3(0.0f,0.0f,0.025f));
+			modelMatrixEclipse = glm::rotate(modelMatrixEclipse, glm::radians(giroEclipse),glm::vec3(0,1,0));
+			rotCount += giroEclipse;
+			rotWheelsX += 0.005;
+			rotWheelsY += 0.025;
+			if(rotWheelsY >= 0.25){
+				rotWheelsY = 0.25;
+			}
+			if(rotCount >= 90.0f){
+				state = 0;
+				rotCount = 0;
+			}
+		default:
+			break;
+		}
+
+		//Máquina de estados del lambo
+
+		switch (stateDoor)
+		{
+		case 0:
+			dorRotCount += 0.6;
+			if(dorRotCount > 75.0)
+			stateDoor = 1;
+			break;
+		
+		case 1:
+			dorRotCount -= 0.6;
+			if(dorRotCount < 0.0)
+			stateDoor = 0;
+			break;
+		default:
+			break;
+		}
 
 		// Constantes de animaciones
 		rotHelHelY += 0.5;
